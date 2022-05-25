@@ -316,7 +316,8 @@ library(mlr3spatiotempcv)
 library(spDataLarge)
 library(tmap)
 library(tmaptools)
-library(raster)</code></pre>
+library(raster)
+library(pROC)</code></pre>
 </div>
 <div id="_mlr3verse_info_" class="section level5 hasAnchor">
 <h5 class="hasAnchor">
@@ -366,6 +367,8 @@ multicore<a href="#_multicore_" class="anchor-section" aria-label="Anchor link t
 </div>
 <div id="landslide-susceptibility" class="section level2 hasAnchor">
 <h2 class="hasAnchor">Landslide Susceptibility<a href="#landslide-susceptibility" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="data" class="section level3 hasAnchor">
+<h3 class="hasAnchor">Data<a href="#data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div id="_data_" class="section level5 hasAnchor">
 <h5 class="hasAnchor">
 data<a href="#_data_" class="anchor-section" aria-label="Anchor link to header"></a>
@@ -430,6 +433,9 @@ lsl<a href="#_lsl_" class="anchor-section" aria-label="Anchor link to header"></
 ## 349: 715253.2 9558797   TRUE 38.98206 -0.035161112  0.002966748 2442.470    2.735578
 ## 350: 713825.6 9559078   TRUE 35.21368  0.020333998 -0.003390223 2377.151    3.203316</code></pre>
 </div>
+</div>
+<div id="glm-classif---spatial-bias" class="section level3 hasAnchor">
+<h3 class="hasAnchor">GLM Classif - Spatial Bias<a href="#glm-classif---spatial-bias" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div id="_glm-fit-pred_" class="section level5 hasAnchor">
 <h5 class="hasAnchor">
 glm-fit-pred<a href="#_glm-fit-pred_" class="anchor-section" aria-label="Anchor link to header"></a>
@@ -472,6 +478,97 @@ map &lt;- tm_shape(hs, bbox = bbx) +
 map-landslides-glm-bias-pred-fig<a href="#_map-landslides-glm-bias-pred-fig_" class="anchor-section" aria-label="Anchor link to header"></a>
 </h5>
 <img src="assets/img/map-landslides-glm-bias-pred-fig-1.png" width="672" />
+</div>
+</div>
+<div id="spatial-cv" class="section level3 hasAnchor">
+<h3 class="hasAnchor">Spatial CV<a href="#spatial-cv" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Here we introduce spatial cross validation to combat spatial bias.</p>
+<div id="mlr3-pipeline" class="section level4 hasAnchor">
+<h4 class="hasAnchor">mlr3 Pipeline<a href="#mlr3-pipeline" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<div id="_task_new_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+task_new<a href="#_task_new_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>task_new &lt;- mlr3spatiotempcv::TaskClassifST$new(
+  id = &quot;ecuador_lsl&quot;,
+  backend = mlr3::as_data_backend(lsl), 
+  target = &quot;lslpts&quot;, 
+  positive = &quot;TRUE&quot;,
+  extra_args = list(
+    coordinate_names = c(&quot;x&quot;, &quot;y&quot;),
+    coords_as_features = FALSE,
+    crs = &quot;EPSG:32717&quot;
+  )
+)
+
+task_new</code></pre>
+<pre><code>## &lt;TaskClassifST:ecuador_lsl&gt; (350 x 6)
+## * Target: lslpts
+## * Properties: twoclass
+## * Features (5):
+##   - dbl (5): cplan, cprof, elev, log10_carea, slope
+## * Coordinates:
+##             x       y
+##   1: 713887.7 9558537
+##   2: 712787.7 9558917
+##   3: 713407.7 9560307
+##   4: 714887.7 9560237
+##   5: 715247.7 9557117
+##  ---                 
+## 346: 714877.2 9558362
+## 347: 714909.5 9558581
+## 348: 713713.6 9558849
+## 349: 715253.2 9558797
+## 350: 713825.6 9559078</code></pre>
+</div>
+<div id="_task_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+task<a href="#_task_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>task &lt;- as_task_classif_st(
+  x = lsl,
+  target = &quot;lslpts&quot;,
+  positive = &quot;TRUE&quot;,
+  coordinate_names = c(&quot;x&quot;, &quot;y&quot;),
+  coords_as_features = FALSE,
+  crs = &quot;EPSG:32717&quot;
+)
+
+task</code></pre>
+<pre><code>## &lt;TaskClassifST:lsl&gt; (350 x 6)
+## * Target: lslpts
+## * Properties: twoclass
+## * Features (5):
+##   - dbl (5): cplan, cprof, elev, log10_carea, slope
+## * Coordinates:
+##             x       y
+##   1: 713887.7 9558537
+##   2: 712787.7 9558917
+##   3: 713407.7 9560307
+##   4: 714887.7 9560237
+##   5: 715247.7 9557117
+##  ---                 
+## 346: 714877.2 9558362
+## 347: 714909.5 9558581
+## 348: 713713.6 9558849
+## 349: 715253.2 9558797
+## 350: 713825.6 9559078</code></pre>
+</div>
+<div id="_plt_duo_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+plt_duo<a href="#_plt_duo_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>mlr3viz::autoplot(task, type = &quot;duo&quot;)</code></pre>
+<img src="assets/img/plt_duo-1.png" width="672" />
+</div>
+<div id="_plot_pairs_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+plot_pairs<a href="#_plot_pairs_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>mlr3viz::autoplot(task, type = &quot;pairs&quot;)</code></pre>
+<img src="assets/img/plot_pairs-1.png" width="672" />
+</div>
+</div>
 </div>
 </div>
 
