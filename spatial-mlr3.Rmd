@@ -1,0 +1,179 @@
+---
+title: A Spatial Statistics Playground w/ mlr3 
+output:
+  html_document:
+    anchor_sections: true
+    code_folding: "hide"
+    css: [assets/style.css]
+    df_print: "default"
+    includes:
+      before_body: assets/style.html
+    lib_dir: docs/libs
+    math_method:
+      engine: katex
+    self_contained: FALSE
+    toc: true
+    toc_depth: 6
+    toc_float:
+      collapsed: false
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+options(digits.secs = 3)
+opts_chunk$set(echo = TRUE)
+opts_chunk$set(results = 'hold')
+opts_chunk$set(message = FALSE)
+
+output <- "docs"
+fig.path <- paste0(output, '/assets/img/')
+
+if (!dir.exists(fig.path)) dir.create(fig.path, recursive = T)
+opts_chunk$set(fig.path = fig.path)
+
+if (!dir.exists(paste0(output, '/assets/'))) dir.create(paste0(output, '/assets/', recursive = T))
+system(sprintf("/opt/homebrew/bin/gcp -u assets/style.css %s/assets/", output))
+
+knitr::knit_hooks$set(link = function(before, options) {
+  if (before) {
+    paste0(
+      '<div id="_', gsub("\\.", "", options$label), '_" class="section level5 hasAnchor">',
+      '<h5 class="hasAnchor">', options$label,
+      '<a href="#_', gsub("\\.", "", options$label),
+      '_" class="anchor-section" aria-label="Anchor link to header"></a>',
+      '</h5>'
+    )
+  } else {
+    '</div>'
+  }
+})
+knitr::opts_chunk$set(link = TRUE)
+```
+
+## Setup
+
+```{r packages, warning=FALSE}
+# from pca-mlr3-pipelines
+library(mlr3verse)
+library(data.table)
+library(future)
+library(igraph)
+library(ggfortify)
+library(scattermore)
+library(R6)
+library(rlang)
+# from Statistical Learning | Geocomputation with R
+library(lgr)
+library(sf)
+library(terra)
+library(progressr)
+library(mlr3spatiotempcv)
+library(spDataLarge)
+library(tmap)
+library(tmaptools)
+library(raster)
+```
+
+```{r mlr3verse_info}
+mlr3verse_info()
+```
+
+```{r packages-extras, eval=FALSE}
+library(mlr3extralearners)
+```
+
+```{r multicore}
+plan(multicore)
+```
+
+## Resources
+
+- [12 Statistical learning | Geocomputing with R](https://geocompr.robinlovelace.net/spatial-cv.html)
+    - https://github.com/Robinlovelace/geocompr/blob/main/12-spatial-cv.Rmd
+- [8.3 Spatiotemporal Analysis | mlr3 Book](https://mlr3book.mlr-org.com/special-tasks.html#spatiotemporal)
+- [Handling of Spatial Data](https://mlr.mlr-org.com/articles/tutorial/handling_of_spatial_data.html)
+- [Chapter 16 Spatial Regression | Spatial Data Science](https://keen-swartz-3146c4.netlify.app/spatglmm.html)
+
+## Landslide Susceptibility
+
+```{r data}
+data("lsl", "study_mask", package = "spDataLarge")
+lsl <- as.data.table(lsl)
+ta <- terra::rast(system.file("raster/ta.tif", package = "spDataLarge"))
+```
+
+```{r map-landslides, error=0}
+lsl_sf <- st_as_sf(lsl, coords = c("x", "y"), crs = "EPSG:32717")
+
+# generates errors
+hs <- terra::shade(
+  slope = ta$slope * pi / 180,
+  terra::terrain(ta$elev, v = "aspect", unit = "radians")
+)
+# so far tmaptools does not support terra objects
+bbx <- tmaptools::bb(
+  raster::raster(hs), xlim = c(-0.0001, 1),
+  ylim = c(-0.0001, 1), relative = TRUE
+)
+
+map <- tm_shape(hs, bbox = bbx) +
+  tm_grid(
+    col = "black", n.x = 1, n.y = 1, labels.inside.frame = FALSE,
+    labels.rot = c(0, 90), lines = FALSE
+  ) +
+  tm_raster(palette = gray(0:100 / 100), n = 100, legend.show = FALSE) +
+  tm_shape(ta$elev) +
+  tm_raster(alpha = 0.5, palette = terrain.colors(10), legend.show = FALSE) +
+  tm_shape(lsl_sf) +
+  tm_bubbles(
+    "lslpts", size = 0.2, palette = "-RdYlBu", title.col = "Landslide: "
+  ) +
+  tm_layout(inner.margins = 0) +
+  tm_legend(bg.color = "white")
+```
+
+```{r map-landslides-fig, echo=FALSE}
+map
+```
+
+```{r lsl}
+print(lsl)
+```
+
+```{r glm-fit-pred}
+fit <- glm(
+  lslpts ~ slope + cplan + cprof + elev + log10_carea,
+  family = binomial(),
+  data = lsl
+)
+
+pred <- terra::predict(ta, model = fit, type = "response")
+```
+
+```{r map-landslides-glm-bias-pred, error=0}
+# throws error
+sv_study_mask <- terra::vect(study_mask)
+
+map <- tm_shape(hs, bbox = bbx) +
+  tm_grid(
+    col = "black", n.x = 1, n.y = 1, labels.inside.frame = FALSE,
+    labels.rot = c(0, 90), lines = FALSE
+  ) +
+  tm_raster(palette = "white", legend.show = FALSE) +
+  # hillshade
+  tm_shape(terra::mask(hs, sv_study_mask), bbox = bbx) +
+	tm_raster(palette = gray(0:100 / 100), n = 100, legend.show = FALSE) +
+	# prediction raster
+  tm_shape(terra::mask(pred, sv_study_mask)) +
+	tm_raster(
+	  alpha = 0.5, palette = "Reds", n = 6, legend.show = TRUE, title = "Susceptibility"
+	) +
+	tm_layout(
+	  legend.position = c("left", "bottom"), legend.title.size = 0.9, inner.margins = 0
+	)
+```
+
+```{r map-landslides-glm-bias-pred-fig, echo=FALSE}
+map
+```
+
