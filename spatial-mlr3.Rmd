@@ -21,6 +21,7 @@ output:
 ```{r setup, include=FALSE}
 library(knitr)
 options(digits.secs = 3)
+options(width = 10000) # output code width for default print method
 opts_chunk$set(echo = TRUE)
 opts_chunk$set(results = 'hold')
 opts_chunk$set(message = FALSE)
@@ -32,7 +33,7 @@ if (!dir.exists(fig.path)) dir.create(fig.path, recursive = T)
 opts_chunk$set(fig.path = fig.path)
 
 if (!dir.exists(paste0(output, '/assets/'))) dir.create(paste0(output, '/assets/', recursive = T))
-system(sprintf("/opt/homebrew/bin/gcp -u assets/style.css %s/assets/", output))
+system(sprintf("cp -u assets/style.css %s/assets/", output))
 
 knitr::knit_hooks$set(link = function(before, options) {
   if (before) {
@@ -162,15 +163,15 @@ map <- tm_shape(hs, bbox = bbx) +
   tm_raster(palette = "white", legend.show = FALSE) +
   # hillshade
   tm_shape(terra::mask(hs, sv_study_mask), bbox = bbx) +
-	tm_raster(palette = gray(0:100 / 100), n = 100, legend.show = FALSE) +
-	# prediction raster
+  tm_raster(palette = gray(0:100 / 100), n = 100, legend.show = FALSE) +
+  # prediction raster
   tm_shape(terra::mask(pred, sv_study_mask)) +
-	tm_raster(
-	  alpha = 0.5, palette = "Reds", n = 6, legend.show = TRUE, title = "Susceptibility"
-	) +
-	tm_layout(
-	  legend.position = c("left", "bottom"), legend.title.size = 0.9, inner.margins = 0
-	)
+  tm_raster(
+    alpha = 0.5, palette = "Reds", n = 6, legend.show = TRUE, title = "Susceptibility"
+  ) +
+  tm_layout(
+    legend.position = c("left", "bottom"), legend.title.size = 0.9, inner.margins = 0
+  )
 ```
 
 ```{r map-landslides-glm-bias-pred-fig, echo=FALSE}
