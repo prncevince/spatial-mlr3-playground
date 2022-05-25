@@ -9,6 +9,12 @@
     ]
   },
   "Packages": {
+    "apcluster": {
+      "Package": "apcluster",
+      "Version": "1.4.9",
+      "Source": "Repository",
+      "Repository": "CRAN"
+    },
     "pROC": {
       "Package": "pROC",
       "Version": "1.18.0",

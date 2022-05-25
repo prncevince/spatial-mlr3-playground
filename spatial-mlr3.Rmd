@@ -189,9 +189,19 @@ Here we introduce spatial cross validation to combat spatial bias.
 
 #### mlr3 Pipeline 
 
+To perform our Spatial CV, we'll construct an mlr3 pipeline.
+
+##### Task 
+
+Note, both `TaskClassifST$new` & `as_task_classif_st` can accept `sf` objects, e.g. our `lsl_sf` object. When this is the case, spatial metadata can be extracted and used for input arguments to the task (e.g. `coordinate_names` & `crs` in the `extra_args` list).
+
+However, apparently the task converts the `sf` object into a `data.table` object, which we know could become memory intensive when handling large data.
+
+By default, all variables *other* than the `target` parameter & the `coordinate_names` within the `backend`/`x` object are used as predictor variables. By default `coords_as_features` is set to `FALSE`, which instructs the task to not use `coordinate_names` as predictors. Set this to `TRUE` to use them as predictors.
+
 ```{r task_new}
 task_new <- mlr3spatiotempcv::TaskClassifST$new(
-  id = "ecuador_lsl",
+  id = "lsl",
   backend = mlr3::as_data_backend(lsl), 
   target = "lslpts", 
   positive = "TRUE",
@@ -218,6 +228,12 @@ task <- as_task_classif_st(
 task
 ```
 
+Creating the tasks via the above methods seem to make them identical, but that's not ***strictly*** the case. 
+
+```{r}
+identical(task_new, task)
+```
+
 ```{r plt_duo}
 mlr3viz::autoplot(task, type = "duo")
 ```
@@ -227,4 +243,20 @@ mlr3viz::autoplot(task, type = "duo")
 mlr3viz::autoplot(task, type = "pairs")
 ```
 
+##### Learner
 
+We'll use a logistic regression learner for this task since the response variable of `lsl$lslpts` is binary. 
+
+```{r}
+as.data.table(mlr_learners) %>% `[`(key == "classif.log_reg")
+```
+
+##### Graph
+
+##### Graph Learner
+
+##### Tuning / Training
+
+This step is where our Spatial Cross-Validation actually happens. 
+
+##### Prediction 
