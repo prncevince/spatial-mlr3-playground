@@ -33,7 +33,7 @@ if (!dir.exists(fig.path)) dir.create(fig.path, recursive = T)
 opts_chunk$set(fig.path = fig.path)
 
 if (!dir.exists(paste0(output, '/assets/'))) dir.create(paste0(output, '/assets/', recursive = T))
-system(sprintf("/opt/homebrew/bin/gcp -u assets/style.css %s/assets/", output))
+system(sprintf("cp -u assets/style.css %s/assets/", output))
 
 knitr::knit_hooks$set(link = function(before, options) {
   if (before) {
