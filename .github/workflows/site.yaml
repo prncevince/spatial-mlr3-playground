@@ -10,7 +10,7 @@ on:
     types: [published]
   workflow_dispatch:
 jobs:
-  pkgdown:
+  rmd-site:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

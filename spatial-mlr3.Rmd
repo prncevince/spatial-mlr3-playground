@@ -73,6 +73,7 @@ library(spDataLarge)
 library(tmap)
 library(tmaptools)
 library(raster)
+library(pROC)
 ```
 
 ```{r mlr3verse_info}
@@ -96,6 +97,8 @@ plan(multicore)
 - [Chapter 16 Spatial Regression | Spatial Data Science](https://keen-swartz-3146c4.netlify.app/spatglmm.html)
 
 ## Landslide Susceptibility
+
+### Data
 
 ```{r data}
 data("lsl", "study_mask", package = "spDataLarge")
@@ -141,6 +144,8 @@ map
 print(lsl)
 ```
 
+### GLM Classif - Spatial Bias
+
 ```{r glm-fit-pred}
 fit <- glm(
   lslpts ~ slope + cplan + cprof + elev + log10_carea,
@@ -177,4 +182,49 @@ map <- tm_shape(hs, bbox = bbx) +
 ```{r map-landslides-glm-bias-pred-fig, echo=FALSE}
 map
 ```
+
+### Spatial CV 
+
+Here we introduce spatial cross validation to combat spatial bias. 
+
+#### mlr3 Pipeline 
+
+```{r task_new}
+task_new <- mlr3spatiotempcv::TaskClassifST$new(
+  id = "ecuador_lsl",
+  backend = mlr3::as_data_backend(lsl), 
+  target = "lslpts", 
+  positive = "TRUE",
+  extra_args = list(
+    coordinate_names = c("x", "y"),
+    coords_as_features = FALSE,
+    crs = "EPSG:32717"
+  )
+)
+
+task_new
+```
+
+```{r task}
+task <- as_task_classif_st(
+  x = lsl,
+  target = "lslpts",
+  positive = "TRUE",
+  coordinate_names = c("x", "y"),
+  coords_as_features = FALSE,
+  crs = "EPSG:32717"
+)
+
+task
+```
+
+```{r plt_duo}
+mlr3viz::autoplot(task, type = "duo")
+```
+
+
+```{r plot_pairs}
+mlr3viz::autoplot(task, type = "pairs")
+```
+
 
