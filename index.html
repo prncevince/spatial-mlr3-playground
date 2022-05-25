@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>A Spatial Statistics Playground w/ mlr3</title>
+
+<script src="libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="libs/navigation-1.1/tabsets.js"></script>
+<script src="libs/navigation-1.1/codefolding.js"></script>
+<link href="libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js" data-external="1" defer integrity="sha256-bgI9WhLOPSUlPrdgHUg3rPIB2vq+D+mYkUTM3q0U8fw=" crossorigin="anonymous"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+  var mathElements = document.getElementsByClassName("math");
+  var macros = [];
+  for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+      katex.render(texText.data, mathElements[i], {
+        displayMode: mathElements[i].classList.contains("display"),
+        throwOnError: false,
+        macros: macros,
+        fleqn: false
+      });
+    }}});
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" data-external="1">
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+<link rel="stylesheet" href="assets/style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+}
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+<script>
+$("div.row > .col.sm-12.col-md-4.col-lg-3")
+  .attr("class", "col-xs-12 col-sm-4 col-md-3")
+$("div.row > .toc-content.col.sm-12.col-md-8.col-lg-9")
+  .attr("class", "toc-content col-xs-12 col-sm-8 col-md-9")
+</script>
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">A Spatial Statistics Playground w/ mlr3</h1>
+
+</div>
+
+
+<div id="setup" class="section level2 hasAnchor">
+<h2 class="hasAnchor">Setup<a href="#setup" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="_packages_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+packages<a href="#_packages_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code># from pca-mlr3-pipelines
+library(mlr3verse)
+library(data.table)
+library(future)
+library(igraph)
+library(ggfortify)
+library(scattermore)
+library(R6)
+library(rlang)
+# from Statistical Learning | Geocomputation with R
+library(lgr)
+library(sf)
+library(terra)
+library(progressr)
+library(mlr3spatiotempcv)
+library(spDataLarge)
+library(tmap)
+library(tmaptools)
+library(raster)</code></pre>
+</div>
+<div id="_mlr3verse_info_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+mlr3verse_info<a href="#_mlr3verse_info_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>mlr3verse_info()</code></pre>
+<pre><code>##              package version
+##  1:            bbotk   0.5.1
+##  2:      mlr3cluster   0.1.2
+##  3:         mlr3data   0.6.0
+##  4:      mlr3filters   0.5.0
+##  5:      mlr3fselect   0.6.1
+##  6:    mlr3hyperband   0.4.0
+##  7:     mlr3learners   0.5.2
+##  8:         mlr3misc  0.10.0
+##  9:    mlr3pipelines   0.4.0
+## 10:        mlr3proba   0.4.4
+## 11:       mlr3tuning  0.12.1
+## 12: mlr3tuningspaces   0.1.1
+## 13:          mlr3viz   0.5.7
+## 14:          paradox   0.8.0</code></pre>
+</div>
+<div id="_packages-extras_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+packages-extras<a href="#_packages-extras_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>library(mlr3extralearners)</code></pre>
+</div>
+<div id="_multicore_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+multicore<a href="#_multicore_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>plan(multicore)</code></pre>
+</div>
+</div>
+<div id="resources" class="section level2 hasAnchor">
+<h2 class="hasAnchor">Resources<a href="#resources" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<ul>
+<li><a href="https://geocompr.robinlovelace.net/spatial-cv.html">12 Statistical learning | Geocomputing with R</a>
+<ul>
+<li><a href="https://github.com/Robinlovelace/geocompr/blob/main/12-spatial-cv.Rmd" class="uri">https://github.com/Robinlovelace/geocompr/blob/main/12-spatial-cv.Rmd</a></li>
+</ul></li>
+<li><a href="https://mlr3book.mlr-org.com/special-tasks.html#spatiotemporal">8.3 Spatiotemporal Analysis | mlr3 Book</a></li>
+<li><a href="https://mlr.mlr-org.com/articles/tutorial/handling_of_spatial_data.html">Handling of Spatial Data</a></li>
+<li><a href="https://keen-swartz-3146c4.netlify.app/spatglmm.html">Chapter 16 Spatial Regression | Spatial Data Science</a></li>
+</ul>
+</div>
+<div id="landslide-susceptibility" class="section level2 hasAnchor">
+<h2 class="hasAnchor">Landslide Susceptibility<a href="#landslide-susceptibility" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="_data_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+data<a href="#_data_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>data(&quot;lsl&quot;, &quot;study_mask&quot;, package = &quot;spDataLarge&quot;)
+lsl &lt;- as.data.table(lsl)
+ta &lt;- terra::rast(system.file(&quot;raster/ta.tif&quot;, package = &quot;spDataLarge&quot;))</code></pre>
+</div>
+<div id="_map-landslides_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+map-landslides<a href="#_map-landslides_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>lsl_sf &lt;- st_as_sf(lsl, coords = c(&quot;x&quot;, &quot;y&quot;), crs = &quot;EPSG:32717&quot;)
+
+# generates errors
+hs &lt;- terra::shade(
+  slope = ta$slope * pi / 180,
+  terra::terrain(ta$elev, v = &quot;aspect&quot;, unit = &quot;radians&quot;)
+)
+# so far tmaptools does not support terra objects
+bbx &lt;- tmaptools::bb(
+  raster::raster(hs), xlim = c(-0.0001, 1),
+  ylim = c(-0.0001, 1), relative = TRUE
+)
+
+map &lt;- tm_shape(hs, bbox = bbx) +
+  tm_grid(
+    col = &quot;black&quot;, n.x = 1, n.y = 1, labels.inside.frame = FALSE,
+    labels.rot = c(0, 90), lines = FALSE
+  ) +
+  tm_raster(palette = gray(0:100 / 100), n = 100, legend.show = FALSE) +
+  tm_shape(ta$elev) +
+  tm_raster(alpha = 0.5, palette = terrain.colors(10), legend.show = FALSE) +
+  tm_shape(lsl_sf) +
+  tm_bubbles(
+    &quot;lslpts&quot;, size = 0.2, palette = &quot;-RdYlBu&quot;, title.col = &quot;Landslide: &quot;
+  ) +
+  tm_layout(inner.margins = 0) +
+  tm_legend(bg.color = &quot;white&quot;)</code></pre>
+</div>
+<div id="_map-landslides-fig_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+map-landslides-fig<a href="#_map-landslides-fig_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<img src="assets/img/map-landslides-fig-1.png" width="672" />
+</div>
+<div id="_lsl_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+lsl<a href="#_lsl_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>print(lsl)</code></pre>
+<pre><code>##             x       y lslpts    slope        cplan        cprof     elev log10_carea
+##   1: 713887.7 9558537  FALSE 33.75185  0.023180449  0.003193061 2422.810    2.784319
+##   2: 712787.7 9558917  FALSE 39.40821 -0.038638908 -0.017187813 2051.771    4.146013
+##   3: 713407.7 9560307  FALSE 37.45409 -0.013329108  0.009671087 1957.832    3.643556
+##   4: 714887.7 9560237  FALSE 31.49607  0.040931452  0.005888638 1968.621    2.268703
+##   5: 715247.7 9557117  FALSE 44.07456  0.009686948  0.005149810 3007.774    3.003426
+##  ---                                                                                
+## 346: 714877.2 9558362   TRUE 49.16936 -0.079123855 -0.004267062 2577.096    3.242106
+## 347: 714909.5 9558581   TRUE 39.75526 -0.022253942  0.010101856 2441.529    3.037662
+## 348: 713713.6 9558849   TRUE 41.92702 -0.026429312  0.001791014 2375.455    2.859420
+## 349: 715253.2 9558797   TRUE 38.98206 -0.035161112  0.002966748 2442.470    2.735578
+## 350: 713825.6 9559078   TRUE 35.21368  0.020333998 -0.003390223 2377.151    3.203316</code></pre>
+</div>
+<div id="_glm-fit-pred_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+glm-fit-pred<a href="#_glm-fit-pred_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>fit &lt;- glm(
+  lslpts ~ slope + cplan + cprof + elev + log10_carea,
+  family = binomial(),
+  data = lsl
+)
+
+pred &lt;- terra::predict(ta, model = fit, type = &quot;response&quot;)</code></pre>
+</div>
+<div id="_map-landslides-glm-bias-pred_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+map-landslides-glm-bias-pred<a href="#_map-landslides-glm-bias-pred_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code># throws error
+sv_study_mask &lt;- terra::vect(study_mask)
+
+map &lt;- tm_shape(hs, bbox = bbx) +
+  tm_grid(
+    col = &quot;black&quot;, n.x = 1, n.y = 1, labels.inside.frame = FALSE,
+    labels.rot = c(0, 90), lines = FALSE
+  ) +
+  tm_raster(palette = &quot;white&quot;, legend.show = FALSE) +
+  # hillshade
+  tm_shape(terra::mask(hs, sv_study_mask), bbox = bbx) +
+  tm_raster(palette = gray(0:100 / 100), n = 100, legend.show = FALSE) +
+  # prediction raster
+  tm_shape(terra::mask(pred, sv_study_mask)) +
+  tm_raster(
+    alpha = 0.5, palette = &quot;Reds&quot;, n = 6, legend.show = TRUE, title = &quot;Susceptibility&quot;
+  ) +
+  tm_layout(
+    legend.position = c(&quot;left&quot;, &quot;bottom&quot;), legend.title.size = 0.9, inner.margins = 0
+  )</code></pre>
+</div>
+<div id="_map-landslides-glm-bias-pred-fig_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+map-landslides-glm-bias-pred-fig<a href="#_map-landslides-glm-bias-pred-fig_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<img src="assets/img/map-landslides-glm-bias-pred-fig-1.png" width="672" />
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3,h4,h5,h6",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+
+</body>
+</html>
