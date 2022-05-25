@@ -485,12 +485,18 @@ map-landslides-glm-bias-pred-fig<a href="#_map-landslides-glm-bias-pred-fig_" cl
 <p>Here we introduce spatial cross validation to combat spatial bias.</p>
 <div id="mlr3-pipeline" class="section level4 hasAnchor">
 <h4 class="hasAnchor">mlr3 Pipeline<a href="#mlr3-pipeline" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>To perform our Spatial CV, we’ll construct an mlr3 pipeline.</p>
+<div id="task" class="section level5 hasAnchor">
+<h5 class="hasAnchor">Task<a href="#task" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<p>Note, both <code>TaskClassifST$new</code> &amp; <code>as_task_classif_st</code> can accept <code>sf</code> objects, e.g. our <code>lsl_sf</code> object. When this is the case, spatial metadata can be extracted and used for input arguments to the task (e.g. <code>coordinate_names</code> &amp; <code>crs</code> in the <code>extra_args</code> list).</p>
+<p>However, apparently the task converts the <code>sf</code> object into a <code>data.table</code> object, which we know could become memory intensive when handling large data.</p>
+<p>By default, all variables <em>other</em> than the <code>target</code> parameter &amp; the <code>coordinate_names</code> within the <code>backend</code>/<code>x</code> object are used as predictor variables. By default <code>coords_as_features</code> is set to <code>FALSE</code>, which instructs the task to not use <code>coordinate_names</code> as predictors. Set this to <code>TRUE</code> to use them as predictors.</p>
 <div id="_task_new_" class="section level5 hasAnchor">
 <h5 class="hasAnchor">
 task_new<a href="#_task_new_" class="anchor-section" aria-label="Anchor link to header"></a>
 </h5>
 <pre class="r"><code>task_new &lt;- mlr3spatiotempcv::TaskClassifST$new(
-  id = &quot;ecuador_lsl&quot;,
+  id = &quot;lsl&quot;,
   backend = mlr3::as_data_backend(lsl), 
   target = &quot;lslpts&quot;, 
   positive = &quot;TRUE&quot;,
@@ -502,7 +508,7 @@ task_new<a href="#_task_new_" class="anchor-section" aria-label="Anchor link to 
 )
 
 task_new</code></pre>
-<pre><code>## &lt;TaskClassifST:ecuador_lsl&gt; (350 x 6)
+<pre><code>## &lt;TaskClassifST:lsl&gt; (350 x 6)
 ## * Target: lslpts
 ## * Properties: twoclass
 ## * Features (5):
@@ -554,6 +560,14 @@ task</code></pre>
 ## 349: 715253.2 9558797
 ## 350: 713825.6 9559078</code></pre>
 </div>
+<p>Creating the tasks via the above methods seem to make them identical, but that’s not <strong><em>strictly</em></strong> the case.</p>
+<div id="_unnamed-chunk-1_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+unnamed-chunk-1<a href="#_unnamed-chunk-1_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>identical(task_new, task)</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+</div>
 <div id="_plt_duo_" class="section level5 hasAnchor">
 <h5 class="hasAnchor">
 plt_duo<a href="#_plt_duo_" class="anchor-section" aria-label="Anchor link to header"></a>
@@ -567,6 +581,32 @@ plot_pairs<a href="#_plot_pairs_" class="anchor-section" aria-label="Anchor link
 </h5>
 <pre class="r"><code>mlr3viz::autoplot(task, type = &quot;pairs&quot;)</code></pre>
 <img src="assets/img/plot_pairs-1.png" width="672" />
+</div>
+</div>
+<div id="learner" class="section level5 hasAnchor">
+<h5 class="hasAnchor">Learner<a href="#learner" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<p>We’ll use a logistic regression learner for this task since the response variable of <code>lsl$lslpts</code> is binary.</p>
+<div id="_unnamed-chunk-2_" class="section level5 hasAnchor">
+<h5 class="hasAnchor">
+unnamed-chunk-2<a href="#_unnamed-chunk-2_" class="anchor-section" aria-label="Anchor link to header"></a>
+</h5>
+<pre class="r"><code>as.data.table(mlr_learners) %&gt;% `[`(key == &quot;classif.log_reg&quot;)</code></pre>
+<pre><code>##                key label task_type                                    feature_types                packages              properties predict_types
+## 1: classif.log_reg  &lt;NA&gt;   classif logical,integer,numeric,character,factor,ordered mlr3,mlr3learners,stats loglik,twoclass,weights response,prob</code></pre>
+</div>
+</div>
+<div id="graph" class="section level5 hasAnchor">
+<h5 class="hasAnchor">Graph<a href="#graph" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+</div>
+<div id="graph-learner" class="section level5 hasAnchor">
+<h5 class="hasAnchor">Graph Learner<a href="#graph-learner" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+</div>
+<div id="tuning-training" class="section level5 hasAnchor">
+<h5 class="hasAnchor">Tuning / Training<a href="#tuning-training" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<p>This step is where our Spatial Cross-Validation actually happens.</p>
+</div>
+<div id="prediction" class="section level5 hasAnchor">
+<h5 class="hasAnchor">Prediction<a href="#prediction" class="anchor-section" aria-label="Anchor link to header"></a></h5>
 </div>
 </div>
 </div>
