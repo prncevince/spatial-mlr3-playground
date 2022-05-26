@@ -33,19 +33,21 @@ if (!dir.exists(fig.path)) dir.create(fig.path, recursive = T)
 opts_chunk$set(fig.path = fig.path)
 
 if (!dir.exists(paste0(output, '/assets/'))) dir.create(paste0(output, '/assets/', recursive = T))
-system(sprintf("cp -u assets/style.css %s/assets/", output))
+file.copy("assets/style.css", sprintf("%s/assets/", output), overwrite = T, copy.date = TRUE)
 
 knitr::knit_hooks$set(link = function(before, options) {
-  if (before) {
-    paste0(
-      '<div id="_', gsub("\\.", "", options$label), '_" class="section level5 hasAnchor">',
-      '<h5 class="hasAnchor">', options$label,
-      '<a href="#_', gsub("\\.", "", options$label),
-      '_" class="anchor-section" aria-label="Anchor link to header"></a>',
-      '</h5>'
-    )
-  } else {
-    '</div>'
+  if (! grepl("^unnamed-chunk-[0-9]*$", options$label)) {
+    if (before) {
+      paste0(
+        '<div id="_', gsub("\\.", "", options$label), '_" class="section level5 hasAnchor">',
+        '<h5 class="hasAnchor">', options$label,
+        '<a href="#_', gsub("\\.", "", options$label),
+        '_" class="anchor-section" aria-label="Anchor link to header"></a>',
+        '</h5>'
+      )
+    } else {
+      '</div>'
+    }
   }
 })
 knitr::opts_chunk$set(link = TRUE)

@@ -9,3 +9,7 @@ iframe {
 div.tocify#TOC {
   max-width: none;
 }
+
+code {
+  white-space: pre !important;
+}
