@@ -561,13 +561,8 @@ task</code></pre>
 ## 350: 713825.6 9559078</code></pre>
 </div>
 <p>Creating the tasks via the above methods seem to make them identical, but that’s not <strong><em>strictly</em></strong> the case.</p>
-<div id="_unnamed-chunk-1_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
-unnamed-chunk-1<a href="#_unnamed-chunk-1_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
 <pre class="r"><code>identical(task_new, task)</code></pre>
 <pre><code>## [1] FALSE</code></pre>
-</div>
 <div id="_plt_duo_" class="section level5 hasAnchor">
 <h5 class="hasAnchor">
 plt_duo<a href="#_plt_duo_" class="anchor-section" aria-label="Anchor link to header"></a>
@@ -586,14 +581,9 @@ plot_pairs<a href="#_plot_pairs_" class="anchor-section" aria-label="Anchor link
 <div id="learner" class="section level5 hasAnchor">
 <h5 class="hasAnchor">Learner<a href="#learner" class="anchor-section" aria-label="Anchor link to header"></a></h5>
 <p>We’ll use a logistic regression learner for this task since the response variable of <code>lsl$lslpts</code> is binary.</p>
-<div id="_unnamed-chunk-2_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
-unnamed-chunk-2<a href="#_unnamed-chunk-2_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
 <pre class="r"><code>as.data.table(mlr_learners) %&gt;% `[`(key == &quot;classif.log_reg&quot;)</code></pre>
 <pre><code>##                key label task_type                                    feature_types                packages              properties predict_types
 ## 1: classif.log_reg  &lt;NA&gt;   classif logical,integer,numeric,character,factor,ordered mlr3,mlr3learners,stats loglik,twoclass,weights response,prob</code></pre>
-</div>
 </div>
 <div id="graph" class="section level5 hasAnchor">
 <h5 class="hasAnchor">Graph<a href="#graph" class="anchor-section" aria-label="Anchor link to header"></a></h5>
