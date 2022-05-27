@@ -294,10 +294,10 @@ $("div.row > .toc-content.col.sm-12.col-md-8.col-lg-9")
 
 <div id="setup" class="section level2 hasAnchor">
 <h2 class="hasAnchor">Setup<a href="#setup" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div id="_packages_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_packages_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 packages<a href="#_packages_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code># from pca-mlr3-pipelines
 library(mlr3verse)
 library(data.table)
@@ -317,12 +317,14 @@ library(spDataLarge)
 library(tmap)
 library(tmaptools)
 library(raster)
-library(pROC)</code></pre>
+library(pROC)
+library(tictoc)
+library(ggplot2)</code></pre>
 </div>
-<div id="_mlr3verse_info_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_mlr3verse_info_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 mlr3verse_info<a href="#_mlr3verse_info_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>mlr3verse_info()</code></pre>
 <pre><code>##              package version
 ##  1:            bbotk   0.5.1
@@ -340,54 +342,55 @@ mlr3verse_info<a href="#_mlr3verse_info_" class="anchor-section" aria-label="Anc
 ## 13:          mlr3viz   0.5.7
 ## 14:          paradox   0.8.0</code></pre>
 </div>
-<div id="_packages-extras_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_packages-extras_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 packages-extras<a href="#_packages-extras_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>library(mlr3extralearners)</code></pre>
-</div>
-<div id="_multicore_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
-multicore<a href="#_multicore_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
-<pre class="r"><code>plan(multicore)</code></pre>
 </div>
 </div>
 <div id="resources" class="section level2 hasAnchor">
 <h2 class="hasAnchor">Resources<a href="#resources" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <ul>
-<li><a href="https://geocompr.robinlovelace.net/spatial-cv.html">12 Statistical learning | Geocomputing with R</a>
+<li><a href="https://geocompr.robinlovelace.net">Geocomputing with R</a>
+<ul>
+<li><a href="https://geocompr.robinlovelace.net/spatial-cv.html">Chapter 12 Statistical learning</a>
 <ul>
 <li><a href="https://github.com/Robinlovelace/geocompr/blob/main/12-spatial-cv.Rmd" class="uri">https://github.com/Robinlovelace/geocompr/blob/main/12-spatial-cv.Rmd</a></li>
+<li><a href="https://github.com/Robinlovelace/geocompr/blob/main/code/12-cv.R" class="uri">https://github.com/Robinlovelace/geocompr/blob/main/code/12-cv.R</a></li>
 </ul></li>
-<li><a href="https://mlr3book.mlr-org.com/special-tasks.html#spatiotemporal">8.3 Spatiotemporal Analysis | mlr3 Book</a></li>
-<li><a href="https://mlr.mlr-org.com/articles/tutorial/handling_of_spatial_data.html">Handling of Spatial Data</a></li>
-<li><a href="https://keen-swartz-3146c4.netlify.app/spatglmm.html">Chapter 16 Spatial Regression | Spatial Data Science</a></li>
+</ul></li>
+<li><a href="https://mlr3book.mlr-org.com/special-tasks.html#spatiotemporal">Chapter 8.3 Spatiotemporal Analysis | mlr3 Book</a></li>
+<li><a href="https://mlr.mlr-org.com/articles/tutorial/handling_of_spatial_data.html">Handling of Spatial Data | mlr v2 articles</a></li>
+<li><a href="https://keen-swartz-3146c4.netlify.app">Spatial Data Science</a>
+<ul>
+<li><a href="https://keen-swartz-3146c4.netlify.app/interpolation.html">Chapter 12 Spatial Interpolation</a></li>
+<li><a href="https://keen-swartz-3146c4.netlify.app/spatglmm.html">Chapter 16 Spatial Regression</a></li>
+</ul></li>
 </ul>
 </div>
 <div id="landslide-susceptibility" class="section level2 hasAnchor">
 <h2 class="hasAnchor">Landslide Susceptibility<a href="#landslide-susceptibility" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <div id="data" class="section level3 hasAnchor">
 <h3 class="hasAnchor">Data<a href="#data" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div id="_data_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_data_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 data<a href="#_data_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>data(&quot;lsl&quot;, &quot;study_mask&quot;, package = &quot;spDataLarge&quot;)
 lsl &lt;- as.data.table(lsl)
 ta &lt;- terra::rast(system.file(&quot;raster/ta.tif&quot;, package = &quot;spDataLarge&quot;))</code></pre>
 </div>
-<div id="_map-landslides_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_map-landslides_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 map-landslides<a href="#_map-landslides_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>lsl_sf &lt;- st_as_sf(lsl, coords = c(&quot;x&quot;, &quot;y&quot;), crs = &quot;EPSG:32717&quot;)
 
 # generates errors
-hs &lt;- terra::shade(
-  slope = ta$slope * pi / 180,
-  terra::terrain(ta$elev, v = &quot;aspect&quot;, unit = &quot;radians&quot;)
-)
+slope1 &lt;- ta$slope * pi / 180
+aspect &lt;- terra::terrain(ta$elev, v = &quot;aspect&quot;, unit = &quot;radians&quot;)
+hs &lt;- terra::shade(slope = slope1, aspect = aspect)
 # so far tmaptools does not support terra objects
 bbx &lt;- tmaptools::bb(
   raster::raster(hs), xlim = c(-0.0001, 1),
@@ -409,16 +412,16 @@ map &lt;- tm_shape(hs, bbox = bbx) +
   tm_layout(inner.margins = 0) +
   tm_legend(bg.color = &quot;white&quot;)</code></pre>
 </div>
-<div id="_map-landslides-fig_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_map-landslides-fig_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 map-landslides-fig<a href="#_map-landslides-fig_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <img src="assets/img/map-landslides-fig-1.png" width="672" />
 </div>
-<div id="_lsl_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_lsl_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 lsl<a href="#_lsl_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>print(lsl)</code></pre>
 <pre><code>##             x       y lslpts    slope        cplan        cprof     elev log10_carea
 ##   1: 713887.7 9558537  FALSE 33.75185  0.023180449  0.003193061 2422.810    2.784319
@@ -436,10 +439,10 @@ lsl<a href="#_lsl_" class="anchor-section" aria-label="Anchor link to header"></
 </div>
 <div id="glm-classif---spatial-bias" class="section level3 hasAnchor">
 <h3 class="hasAnchor">GLM Classif - Spatial Bias<a href="#glm-classif---spatial-bias" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<div id="_glm-fit-pred_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_glm-fit-pred_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 glm-fit-pred<a href="#_glm-fit-pred_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>fit &lt;- glm(
   lslpts ~ slope + cplan + cprof + elev + log10_carea,
   family = binomial(),
@@ -448,10 +451,10 @@ glm-fit-pred<a href="#_glm-fit-pred_" class="anchor-section" aria-label="Anchor 
 
 pred &lt;- terra::predict(ta, model = fit, type = &quot;response&quot;)</code></pre>
 </div>
-<div id="_map-landslides-glm-bias-pred_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_map-landslides-glm-bias-pred_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 map-landslides-glm-bias-pred<a href="#_map-landslides-glm-bias-pred_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code># throws error
 sv_study_mask &lt;- terra::vect(study_mask)
 
@@ -473,28 +476,30 @@ map &lt;- tm_shape(hs, bbox = bbx) +
     legend.position = c(&quot;left&quot;, &quot;bottom&quot;), legend.title.size = 0.9, inner.margins = 0
   )</code></pre>
 </div>
-<div id="_map-landslides-glm-bias-pred-fig_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_map-landslides-glm-bias-pred-fig_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 map-landslides-glm-bias-pred-fig<a href="#_map-landslides-glm-bias-pred-fig_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <img src="assets/img/map-landslides-glm-bias-pred-fig-1.png" width="672" />
 </div>
+<pre class="r"><code>pROC::auc(pROC::roc(lsl$lslpts, fitted(fit)))</code></pre>
+<pre><code>## Area under the curve: 0.8216</code></pre>
 </div>
-<div id="spatial-cv" class="section level3 hasAnchor">
-<h3 class="hasAnchor">Spatial CV<a href="#spatial-cv" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>Here we introduce spatial cross validation to combat spatial bias.</p>
-<div id="mlr3-pipeline" class="section level4 hasAnchor">
-<h4 class="hasAnchor">mlr3 Pipeline<a href="#mlr3-pipeline" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>To perform our Spatial CV, we’ll construct an mlr3 pipeline.</p>
-<div id="task" class="section level5 hasAnchor">
-<h5 class="hasAnchor">Task<a href="#task" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="spatial-cv-using-mlr3" class="section level3 hasAnchor">
+<h3 class="hasAnchor">Spatial CV using mlr3<a href="#spatial-cv-using-mlr3" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Here we introduce spatial cross validation to combat spatial autocorrelation and bias. We’ll use the mlr3 framework to build our model.</p>
+<p>Specifically, we’ll run 4 models using an mlr3 ‘design’. A design is a table of scenarios (models to be evaluated) of unique combinations of <a href="https://mlr3.mlr-org.com/reference/Task.html"><code>Task</code></a>, <a href="https://mlr3.mlr-org.com/reference/Learner.html"><code>Learner</code></a>, and <a href="https://mlr3.mlr-org.com/reference/Resampling.html"><code>Resampling</code></a> objects.</p>
+<p>We create the design using <code>benchmar_grid</code> and can run the design object using <code>benchmark</code>.</p>
+<p>We will parallelize the execution of our models as much as possible. This depends on the number of cores that are available on our machine and by how we instruct <code>future</code>s to be resolved by specifying the <a href="https://future.futureverse.org/articles/future-3-topologies.html">future topology</a> via <code>future::plan</code>. An optimal approach can also depend on types of resampling methods used by each of our models (e.g. nested resampling can be executing in parallel in the inner resampling loop), as well as the dimensions of our design.</p>
+<div id="task" class="section level4 hasAnchor">
+<h4 class="hasAnchor">Task<a href="#task" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>Note, both <code>TaskClassifST$new</code> &amp; <code>as_task_classif_st</code> can accept <code>sf</code> objects, e.g. our <code>lsl_sf</code> object. When this is the case, spatial metadata can be extracted and used for input arguments to the task (e.g. <code>coordinate_names</code> &amp; <code>crs</code> in the <code>extra_args</code> list).</p>
 <p>However, apparently the task converts the <code>sf</code> object into a <code>data.table</code> object, which we know could become memory intensive when handling large data.</p>
 <p>By default, all variables <em>other</em> than the <code>target</code> parameter &amp; the <code>coordinate_names</code> within the <code>backend</code>/<code>x</code> object are used as predictor variables. By default <code>coords_as_features</code> is set to <code>FALSE</code>, which instructs the task to not use <code>coordinate_names</code> as predictors. Set this to <code>TRUE</code> to use them as predictors.</p>
-<div id="_task_new_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_task_new_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 task_new<a href="#_task_new_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>task_new &lt;- mlr3spatiotempcv::TaskClassifST$new(
   id = &quot;lsl&quot;,
   backend = mlr3::as_data_backend(lsl), 
@@ -527,10 +532,10 @@ task_new</code></pre>
 ## 349: 715253.2 9558797
 ## 350: 713825.6 9559078</code></pre>
 </div>
-<div id="_task_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_task_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 task<a href="#_task_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>task &lt;- as_task_classif_st(
   x = lsl,
   target = &quot;lslpts&quot;,
@@ -563,41 +568,80 @@ task</code></pre>
 <p>Creating the tasks via the above methods seem to make them identical, but that’s not <strong><em>strictly</em></strong> the case.</p>
 <pre class="r"><code>identical(task_new, task)</code></pre>
 <pre><code>## [1] FALSE</code></pre>
-<div id="_plt_duo_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_plt_duo_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 plt_duo<a href="#_plt_duo_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>mlr3viz::autoplot(task, type = &quot;duo&quot;)</code></pre>
 <img src="assets/img/plt_duo-1.png" width="672" />
 </div>
-<div id="_plot_pairs_" class="section level5 hasAnchor">
-<h5 class="hasAnchor">
+<div id="_plot_pairs_" class="section level6 hasAnchor">
+<h6 class="hasAnchor">
 plot_pairs<a href="#_plot_pairs_" class="anchor-section" aria-label="Anchor link to header"></a>
-</h5>
+</h6>
 <pre class="r"><code>mlr3viz::autoplot(task, type = &quot;pairs&quot;)</code></pre>
 <img src="assets/img/plot_pairs-1.png" width="672" />
 </div>
 </div>
-<div id="learner" class="section level5 hasAnchor">
-<h5 class="hasAnchor">Learner<a href="#learner" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="learner" class="section level4 hasAnchor">
+<h4 class="hasAnchor">Learner<a href="#learner" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>We’ll use a logistic regression learner for this task since the response variable of <code>lsl$lslpts</code> is binary.</p>
 <pre class="r"><code>as.data.table(mlr_learners) %&gt;% `[`(key == &quot;classif.log_reg&quot;)</code></pre>
 <pre><code>##                key label task_type                                    feature_types                packages              properties predict_types
 ## 1: classif.log_reg  &lt;NA&gt;   classif logical,integer,numeric,character,factor,ordered mlr3,mlr3learners,stats loglik,twoclass,weights response,prob</code></pre>
+<pre class="r"><code>learner = lrn(&quot;classif.log_reg&quot;, predict_type = &quot;prob&quot;)</code></pre>
 </div>
-<div id="graph" class="section level5 hasAnchor">
-<h5 class="hasAnchor">Graph<a href="#graph" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="resampling" class="section level4 hasAnchor">
+<h4 class="hasAnchor">Resampling<a href="#resampling" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<pre class="r"><code>resamplings = list(
+  rsmp(&quot;repeated_spcv_coords&quot;, folds = 5, repeats = 100),
+  rsmp(&quot;repeated_cv&quot;, folds = 5, repeats = 100)
+)</code></pre>
 </div>
-<div id="graph-learner" class="section level5 hasAnchor">
-<h5 class="hasAnchor">Graph Learner<a href="#graph-learner" class="anchor-section" aria-label="Anchor link to header"></a></h5>
+<div id="design-benchmark-grid" class="section level4 hasAnchor">
+<h4 class="hasAnchor">Design &amp; Benchmark Grid<a href="#design-benchmark-grid" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<pre class="r"><code>design = benchmark_grid(
+  tasks = task,
+  learners = learner,
+  resamplings = resamplings
+)
+
+design</code></pre>
+<pre><code>##                   task                    learner                         resampling
+## 1: &lt;TaskClassifST[51]&gt; &lt;LearnerClassifLogReg[37]&gt; &lt;ResamplingRepeatedSpCVCoords[22]&gt;
+## 2: &lt;TaskClassifST[51]&gt; &lt;LearnerClassifLogReg[37]&gt;         &lt;ResamplingRepeatedCV[22]&gt;</code></pre>
 </div>
-<div id="tuning-training" class="section level5 hasAnchor">
-<h5 class="hasAnchor">Tuning / Training<a href="#tuning-training" class="anchor-section" aria-label="Anchor link to header"></a></h5>
-<p>This step is where our Spatial Cross-Validation actually happens.</p>
+<div id="execution---training" class="section level4 hasAnchor">
+<h4 class="hasAnchor">Execution - Training<a href="#execution---training" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>Set seed for reproducibility</p>
+<pre class="r"><code>set.seed(1)
+
+plan(multisession)</code></pre>
+<pre class="r"><code>lgr::get_logger(&quot;mlr3&quot;)$set_threshold(&quot;warn&quot;)
+
+tic()
+progressr::with_progress(
+  bmr &lt;- benchmark(
+    design = design,
+    store_models = TRUE,
+    store_backends = FALSE,
+    encapsulate = &quot;evaluate&quot;
+  )
+)</code></pre>
+<pre><code>## Warning: The fallback learner &#39;response&#39; and the base learner &#39;prob&#39; have different predict types</code></pre>
+<pre class="r"><code>toc()</code></pre>
+<pre><code>## 32.512 sec elapsed</code></pre>
+<pre class="r"><code>p_auroc &lt;- autoplot(bmr, measure = msr(&quot;classif.auc&quot;))
+p_auroc$labels$y = &quot;AUROC&quot;
+p_auroc$layers[[1]]$aes_params$fill = c(&quot;lightblue2&quot;, &quot;mistyrose2&quot;)
+
+p_auroc + scale_x_discrete(labels=c(&quot;spatial CV&quot;, &quot;conventional CV&quot;))</code></pre>
+<p><img src="assets/img/unnamed-chunk-9-1.png" width="672" /></p>
+<pre class="r"><code>autoplot(bmr) + scale_x_discrete(labels=c(&quot;spatial CV&quot;, &quot;conventional CV&quot;))</code></pre>
+<p><img src="assets/img/unnamed-chunk-10-1.png" width="672" /></p>
 </div>
-<div id="prediction" class="section level5 hasAnchor">
-<h5 class="hasAnchor">Prediction<a href="#prediction" class="anchor-section" aria-label="Anchor link to header"></a></h5>
-</div>
+<div id="prediction" class="section level4 hasAnchor">
+<h4 class="hasAnchor">Prediction<a href="#prediction" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 </div>
 </div>
 </div>
