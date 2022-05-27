@@ -38,12 +38,13 @@ file.copy("assets/style.css", sprintf("%s/assets/", output), overwrite = T, copy
 knitr::knit_hooks$set(link = function(before, options) {
   if (! grepl("^unnamed-chunk-[0-9]*$", options$label)) {
     if (before) {
+      h <- 6
       paste0(
-        '<div id="_', gsub("\\.", "", options$label), '_" class="section level5 hasAnchor">',
-        '<h5 class="hasAnchor">', options$label,
+        '<div id="_', gsub("\\.", "", options$label), '_" class="section level', h, ' hasAnchor">',
+        '<h', h, ' class="hasAnchor">', options$label,
         '<a href="#_', gsub("\\.", "", options$label),
         '_" class="anchor-section" aria-label="Anchor link to header"></a>',
-        '</h5>'
+        '</h', h, '>'
       )
     } else {
       '</div>'
@@ -76,6 +77,8 @@ library(tmap)
 library(tmaptools)
 library(raster)
 library(pROC)
+library(tictoc)
+library(ggplot2)
 ```
 
 ```{r mlr3verse_info}
@@ -86,17 +89,17 @@ mlr3verse_info()
 library(mlr3extralearners)
 ```
 
-```{r multicore}
-plan(multicore)
-```
-
 ## Resources
 
-- [12 Statistical learning | Geocomputing with R](https://geocompr.robinlovelace.net/spatial-cv.html)
-    - https://github.com/Robinlovelace/geocompr/blob/main/12-spatial-cv.Rmd
-- [8.3 Spatiotemporal Analysis | mlr3 Book](https://mlr3book.mlr-org.com/special-tasks.html#spatiotemporal)
-- [Handling of Spatial Data](https://mlr.mlr-org.com/articles/tutorial/handling_of_spatial_data.html)
-- [Chapter 16 Spatial Regression | Spatial Data Science](https://keen-swartz-3146c4.netlify.app/spatglmm.html)
+- [Geocomputing with R](https://geocompr.robinlovelace.net)
+    - [Chapter 12 Statistical learning](https://geocompr.robinlovelace.net/spatial-cv.html)
+        - https://github.com/Robinlovelace/geocompr/blob/main/12-spatial-cv.Rmd
+        - https://github.com/Robinlovelace/geocompr/blob/main/code/12-cv.R
+- [Chapter 8.3 Spatiotemporal Analysis | mlr3 Book](https://mlr3book.mlr-org.com/special-tasks.html#spatiotemporal)
+- [Handling of Spatial Data | mlr v2 articles](https://mlr.mlr-org.com/articles/tutorial/handling_of_spatial_data.html)
+- [Spatial Data Science](https://keen-swartz-3146c4.netlify.app)
+    - [Chapter 12 Spatial Interpolation](https://keen-swartz-3146c4.netlify.app/interpolation.html)
+    - [Chapter 16 Spatial Regression](https://keen-swartz-3146c4.netlify.app/spatglmm.html)
 
 ## Landslide Susceptibility
 
@@ -112,10 +115,9 @@ ta <- terra::rast(system.file("raster/ta.tif", package = "spDataLarge"))
 lsl_sf <- st_as_sf(lsl, coords = c("x", "y"), crs = "EPSG:32717")
 
 # generates errors
-hs <- terra::shade(
-  slope = ta$slope * pi / 180,
-  terra::terrain(ta$elev, v = "aspect", unit = "radians")
-)
+slope1 <- ta$slope * pi / 180
+aspect <- terra::terrain(ta$elev, v = "aspect", unit = "radians")
+hs <- terra::shade(slope = slope1, aspect = aspect)
 # so far tmaptools does not support terra objects
 bbx <- tmaptools::bb(
   raster::raster(hs), xlim = c(-0.0001, 1),
@@ -185,15 +187,22 @@ map <- tm_shape(hs, bbox = bbx) +
 map
 ```
 
-### Spatial CV 
+```{r}
+pROC::auc(pROC::roc(lsl$lslpts, fitted(fit)))
+```
 
-Here we introduce spatial cross validation to combat spatial bias. 
 
-#### mlr3 Pipeline 
+### Spatial CV using mlr3
 
-To perform our Spatial CV, we'll construct an mlr3 pipeline.
+Here we introduce spatial cross validation to combat spatial autocorrelation and bias. We'll use the mlr3 framework to build our model.
 
-##### Task 
+Specifically, we'll run 4 models using an mlr3 'design'. A design is a table of scenarios (models to be evaluated) of unique combinations of [`Task`](https://mlr3.mlr-org.com/reference/Task.html), [`Learner`](https://mlr3.mlr-org.com/reference/Learner.html), and [`Resampling`](https://mlr3.mlr-org.com/reference/Resampling.html) objects.
+
+We create the design using `benchmar_grid` and can run the design object using `benchmark`. 
+
+We will parallelize the execution of our models as much as possible. This depends on the number of cores that are available on our machine and by how we instruct `future`s to be resolved by specifying the [future topology](https://future.futureverse.org/articles/future-3-topologies.html) via `future::plan`. An optimal approach can also depend on types of resampling methods used by each of our models (e.g. nested resampling can be executing in parallel in the inner resampling loop), as well as the dimensions of our design. 
+
+#### Task 
 
 Note, both `TaskClassifST$new` & `as_task_classif_st` can accept `sf` objects, e.g. our `lsl_sf` object. When this is the case, spatial metadata can be extracted and used for input arguments to the task (e.g. `coordinate_names` & `crs` in the `extra_args` list).
 
@@ -245,7 +254,7 @@ mlr3viz::autoplot(task, type = "duo")
 mlr3viz::autoplot(task, type = "pairs")
 ```
 
-##### Learner
+#### Learner
 
 We'll use a logistic regression learner for this task since the response variable of `lsl$lslpts` is binary. 
 
@@ -253,12 +262,71 @@ We'll use a logistic regression learner for this task since the response variabl
 as.data.table(mlr_learners) %>% `[`(key == "classif.log_reg")
 ```
 
-##### Graph
+```{r}
+learner = lrn("classif.log_reg", predict_type = "prob")
+```
 
-##### Graph Learner
+#### Resampling
 
-##### Tuning / Training
+```{r}
+resamplings = list(
+  rsmp("repeated_spcv_coords", folds = 5, repeats = 100),
+  rsmp("repeated_cv", folds = 5, repeats = 100)
+)
+```
 
-This step is where our Spatial Cross-Validation actually happens. 
+#### Design & Benchmark Grid
 
-##### Prediction 
+```{r}
+design = benchmark_grid(
+  tasks = task,
+  learners = learner,
+  resamplings = resamplings
+)
+
+design
+```
+
+#### Execution - Training
+
+Set seed for reproducibility
+
+```{r}
+set.seed(1)
+
+plan(multisession)
+```
+
+```{r}
+lgr::get_logger("mlr3")$set_threshold("warn")
+
+tic()
+progressr::with_progress(
+  bmr <- benchmark(
+    design = design,
+    store_models = TRUE,
+    store_backends = FALSE,
+    encapsulate = "evaluate"
+  )
+)
+toc()
+```
+
+```{r}
+p_auroc <- autoplot(bmr, measure = msr("classif.auc"))
+p_auroc$labels$y = "AUROC"
+p_auroc$layers[[1]]$aes_params$fill = c("lightblue2", "mistyrose2")
+
+p_auroc + scale_x_discrete(labels=c("spatial CV", "conventional CV"))
+```
+
+
+```{r}
+autoplot(bmr) + scale_x_discrete(labels=c("spatial CV", "conventional CV"))
+```
+
+#### Prediction 
+
+```{r}
+```
+
