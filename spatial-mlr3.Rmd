@@ -1,13 +1,11 @@
 ---
-title: A Spatial Statistics Playground w/ mlr3 
+title: A Spatial Statistics Playground w/ mlr3
 output:
   html_document:
     anchor_sections: true
-    code_folding: "hide"
+    code_folding: show
     css: [assets/style.css]
-    df_print: "default"
-    includes:
-      before_body: assets/style.html
+    df_print: default
     lib_dir: docs/libs
     math_method:
       engine: katex
@@ -16,31 +14,61 @@ output:
     toc_depth: 6
     toc_float:
       collapsed: false
+    extra_dependencies:
+      !expr list(htmltools::htmlDependency('chunk-names', '1.0', paste0(getwd(), '/assets'), script='chunk-names.js', all_files = FALSE))
 ---
 
 ```{r setup, include=FALSE}
 library(knitr)
+
+# chunk output ----
 options(digits.secs = 3)
-options(width = 10000) # output code width for default print method
-opts_chunk$set(echo = TRUE)
 opts_chunk$set(results = 'hold')
 opts_chunk$set(message = FALSE)
+# set code width for default print method - max 10000
+knit_hooks$set(print.width = function(before, options) {
+  if (!is.null(options$print.width)) {
+    if (before) {
+      if (options$print.width > 10000) options$print.width <- 10000
+      options(width = options$print.width)
+    } else {
+      options(width = 80)
+    }
+  }
+})
 
+# globals ----
 output <- "docs"
-fig.path <- paste0(output, '/assets/img/')
 
-if (!dir.exists(fig.path)) dir.create(fig.path, recursive = T)
-opts_chunk$set(fig.path = fig.path)
-
+# styling ----
 if (!dir.exists(paste0(output, '/assets/'))) dir.create(paste0(output, '/assets/', recursive = T))
 file.copy("assets/style.css", sprintf("%s/assets/", output), overwrite = T, copy.date = TRUE)
 
-knitr::knit_hooks$set(link = function(before, options) {
-  if (! grepl("^unnamed-chunk-[0-9]*$", options$label)) {
+# images - path, compression & resolution ----
+fig.path <- paste0(output, '/assets/img/')
+if (!dir.exists(fig.path)) dir.create(fig.path, recursive = T)
+opts_chunk$set(fig.path = fig.path)
+knit_hooks$set(pngquant = hook_pngquant)
+opts_chunk$set(pngquant = '')
+opts_hooks$set(fig.screen = function(options) {
+  mbp14_dpi <- 254
+  mbp14_width <- 3024
+  mbp14_height <- 1964
+  if (options$fig.screen == TRUE) {
+    options$dpi <- dpi_mbp14
+    options$fig.dim = c(mbp14_width/mbp14_dpi, mbp14_height/mbp14_dpi)
+  }
+  options
+})
+
+# chunk names as headers & anchors ----
+opts_chunk$set(link = TRUE)
+knit_hooks$set(link = function(before, options) {
+  if (options$link == TRUE & ! grepl("^unnamed-chunk-[0-9]*$", options$label)) {
     if (before) {
       h <- 6
       paste0(
-        '<div id="_', gsub("\\.", "", options$label), '_" class="section level', h, ' hasAnchor">',
+        '<div id="_', gsub("\\.", "", options$label), '_" class="chunk section level', h, '">',
         '<h', h, ' class="hasAnchor">', options$label,
         '<a href="#_', gsub("\\.", "", options$label),
         '_" class="anchor-section" aria-label="Anchor link to header"></a>',
@@ -51,8 +79,15 @@ knitr::knit_hooks$set(link = function(before, options) {
     }
   }
 })
-knitr::opts_chunk$set(link = TRUE)
 ```
+
+## Foreward
+
+Here I explore handling spatial data to build predictive models. And in particularly I use the [mlr3](https://mlr3.mlr-org.com) ecosystem as my modeling framework. Much of this code comes from the [Resources](#resources) gathered below. 
+
+All of the computations are ran via GitHub Actions. Thus, the [hardware / compute specs](https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources) are minimal - but the workflow to render this R Markdown is entirely reproducible. 
+
+Enjoy.
 
 ## Setup
 
@@ -79,14 +114,11 @@ library(raster)
 library(pROC)
 library(tictoc)
 library(ggplot2)
+library(mlr3extralearners)
 ```
 
 ```{r mlr3verse_info}
 mlr3verse_info()
-```
-
-```{r packages-extras, eval=FALSE}
-library(mlr3extralearners)
 ```
 
 ## Resources
@@ -111,10 +143,10 @@ lsl <- as.data.table(lsl)
 ta <- terra::rast(system.file("raster/ta.tif", package = "spDataLarge"))
 ```
 
-```{r map-landslides, error=0}
+```{r map-landslides}
 lsl_sf <- st_as_sf(lsl, coords = c("x", "y"), crs = "EPSG:32717")
 
-# generates errors
+# terra generates errors if this object is called named 'slope'
 slope1 <- ta$slope * pi / 180
 aspect <- terra::terrain(ta$elev, v = "aspect", unit = "radians")
 hs <- terra::shade(slope = slope1, aspect = aspect)
@@ -145,10 +177,12 @@ map
 ```
 
 ```{r lsl}
-print(lsl)
+lsl
 ```
 
-### GLM Classif - Spatial Bias
+### Spatial Bias
+
+#### GLM Classif - Predictive Model
 
 ```{r glm-fit-pred}
 fit <- glm(
@@ -164,7 +198,7 @@ pred <- terra::predict(ta, model = fit, type = "response")
 # throws error
 sv_study_mask <- terra::vect(study_mask)
 
-map <- tm_shape(hs, bbox = bbx) +
+map_glm <- tm_shape(hs, bbox = bbx) +
   tm_grid(
     col = "black", n.x = 1, n.y = 1, labels.inside.frame = FALSE,
     labels.rot = c(0, 90), lines = FALSE
@@ -184,25 +218,30 @@ map <- tm_shape(hs, bbox = bbx) +
 ```
 
 ```{r map-landslides-glm-bias-pred-fig, echo=FALSE}
-map
+map_glm
 ```
 
-```{r}
+```{r auroc}
 pROC::auc(pROC::roc(lsl$lslpts, fitted(fit)))
 ```
 
-
 ### Spatial CV using mlr3
 
-Here we introduce spatial cross validation to combat spatial autocorrelation and bias. We'll use the mlr3 framework to build our model.
+Here we introduce spatial cross validation to combat spatial autocorrelation and bias. As mentioned previously, we'll use the [mlr3](https://mlr3.mlr-org.com) framework to build our model.
 
-Specifically, we'll run 4 models using an mlr3 'design'. A design is a table of scenarios (models to be evaluated) of unique combinations of [`Task`](https://mlr3.mlr-org.com/reference/Task.html), [`Learner`](https://mlr3.mlr-org.com/reference/Learner.html), and [`Resampling`](https://mlr3.mlr-org.com/reference/Resampling.html) objects.
+Specifically, we'll run 4 types of models. The first 2 will be specified via an mlr3 'design'. A design is a table of scenarios (models to be evaluated) of unique combinations of [`Task`](https://mlr3.mlr-org.com/reference/Task.html), [`Learner`](https://mlr3.mlr-org.com/reference/Learner.html), and [`Resampling`](https://mlr3.mlr-org.com/reference/Resampling.html) objects.
 
-We create the design using `benchmar_grid` and can run the design object using `benchmark`. 
+We create the design using `benchmark_grid` and can run the design object using `benchmark`. 
 
 We will parallelize the execution of our models as much as possible. This depends on the number of cores that are available on our machine and by how we instruct `future`s to be resolved by specifying the [future topology](https://future.futureverse.org/articles/future-3-topologies.html) via `future::plan`. An optimal approach can also depend on types of resampling methods used by each of our models (e.g. nested resampling can be executing in parallel in the inner resampling loop), as well as the dimensions of our design. 
 
-#### Task 
+#### GLM Classif - Model Evaluation
+
+The point of this section is to retrieve a bias-reduced performance estimate. We'll do this by using the logistic regression learner "classif.log_reg" first for predicting landslide susceptibility. 
+
+In the next section, we will use a learner that has hyperparameters (an SVM), which we will tune. The goal of training that model will be to maximize predictive performance. 
+
+##### Task 
 
 Note, both `TaskClassifST$new` & `as_task_classif_st` can accept `sf` objects, e.g. our `lsl_sf` object. When this is the case, spatial metadata can be extracted and used for input arguments to the task (e.g. `coordinate_names` & `crs` in the `extra_args` list).
 
@@ -249,36 +288,37 @@ identical(task_new, task)
 mlr3viz::autoplot(task, type = "duo")
 ```
 
-
-```{r plot_pairs}
+```{r plot_pairs, fig.screen=TRUE}
 mlr3viz::autoplot(task, type = "pairs")
 ```
 
-#### Learner
+##### Learner
 
 We'll use a logistic regression learner for this task since the response variable of `lsl$lslpts` is binary. 
 
-```{r}
+```{r print.width=10000}
 as.data.table(mlr_learners) %>% `[`(key == "classif.log_reg")
 ```
 
 ```{r}
-learner = lrn("classif.log_reg", predict_type = "prob")
+learner <- lrn("classif.log_reg", predict_type = "prob")
+# to make sure that training does not stop b/c of any failing models, we define a fallback learner
+learner$fallback <- lrn("classif.featureless", predict_type = "prob")
 ```
 
-#### Resampling
+##### Resampling
 
 ```{r}
-resamplings = list(
+resamplings <- list(
   rsmp("repeated_spcv_coords", folds = 5, repeats = 100),
   rsmp("repeated_cv", folds = 5, repeats = 100)
 )
 ```
 
-#### Design & Benchmark Grid
+##### Design & Benchmark Grid
 
 ```{r}
-design = benchmark_grid(
+design <- benchmark_grid(
   tasks = task,
   learners = learner,
   resamplings = resamplings
@@ -287,9 +327,9 @@ design = benchmark_grid(
 design
 ```
 
-#### Execution - Training
+##### Execution - Training
 
-Set seed for reproducibility
+Set seed for reproducibility.
 
 ```{r}
 set.seed(1)
@@ -304,13 +344,15 @@ tic()
 progressr::with_progress(
   bmr <- benchmark(
     design = design,
-    store_models = TRUE,
+    store_models = FALSE,
     store_backends = FALSE,
     encapsulate = "evaluate"
   )
 )
 toc()
 ```
+
+##### Model Performance Evaluation
 
 ```{r}
 p_auroc <- autoplot(bmr, measure = msr("classif.auc"))
@@ -325,8 +367,190 @@ p_auroc + scale_x_discrete(labels=c("spatial CV", "conventional CV"))
 autoplot(bmr) + scale_x_discrete(labels=c("spatial CV", "conventional CV"))
 ```
 
-#### Prediction 
+#### SVM Classif - Predictive Model
+
+##### Learner
+
+```{r print.width=10000}
+as.data.table(mlr_learners) %>% `[`(grepl("svm", key) & task_type == "classif")
+```
 
 ```{r}
+lrn_ksvm <- lrn("classif.ksvm", predict_type = "prob", kernel = "rbfdot", type = "C-svc")
+# to make sure that tuning does not stop b/c of any failing models, we define a fallback learner
+lrn_ksvm$fallback <- lrn("classif.featureless", predict_type = "prob")
 ```
+
+##### Hyperparameter Tuner Strategy
+
+```{r}
+# five spatially disjoint k-means partitions
+tune_level_spcv <- rsmp("spcv_coords", folds = 5)
+# randomly sample partitions
+tune_level_cv <- rsmp("cv", folds = 5)
+# use 50 randomly selected hyperparameters
+terminator <- trm("evals", n_evals = 50)
+tuner <- tnr("random_search")
+# define the outer limits of the randomly selected hyperparameters
+search_space <- paradox::ps(
+  C = paradox::p_dbl(lower = -12, upper = 15, trafo = function(x) 2^x),
+  sigma = paradox::p_dbl(lower = -15, upper = 6, trafo = function(x) 2^x)
+)
+```
+
+```{r}
+at_ksvm_spcv = mlr3tuning::AutoTuner$new(
+  learner = lrn_ksvm,
+  resampling = tune_level_spcv, # spatially disjoint k-fold k-means partitioning
+  measure = mlr3::msr("classif.auc"), # performance measure
+  terminator = terminator, # n iterations of unique randomly selected hyperparameters
+  tuner = tuner, # specify random search
+  search_space = search_space, # predefined hyperparameter search space
+  store_models = TRUE
+)
+
+at_ksvm_cv = mlr3tuning::AutoTuner$new(
+  learner = lrn_ksvm,
+  resampling = tune_level_cv,
+  measure = mlr3::msr("classif.auc"),
+  terminator = terminator,
+  tuner = tuner,
+  search_space = search_space
+)
+```
+
+##### Execution - Training
+
+```{r}
+set.seed(1)
+
+plan(multisession)
+```
+
+```{r}
+lgr::get_logger("mlr3")$set_threshold("warn")
+lgr::get_logger("bbotk")$set_threshold("warn")
+
+tic()
+progressr::with_progress(
+  {
+    at_ksvm_spcv$train(task = task)
+    at_ksvm_cv$train(task)
+  }
+)
+toc()
+```
+
+```{r}
+at_ksvm_spcv$model$learner$state$model
+```
+
+```{r print.width=10000}
+at_ksvm_spcv$model$tuning_instance
+```
+
+```{r}
+at_ksvm_spcv$tuning_result$learner_param_vals
+```
+
+```{r}
+at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]
+```
+
+```{r print.width=10000}
+at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$score()
+```
+
+```{r}
+at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$learner
+```
+
+```{r}
+at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$learners
+```
+
+```{r}
+at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$learners[[1]]$model
+at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$learners[[5]]$model
+```
+
+##### k-folds CV Spatial Partitioning  
+
+```{r fig.screen=TRUE}
+autoplot(
+  object = at_ksvm_spcv$archive$benchmark_result$resamplings$resampling[[1]],
+  task = task, fold_id = 1:5
+)
+```
+
+##### k-folds CV Random Partitioning
+
+```{r fig.screen=TRUE}
+autoplot(
+  object = at_ksvm_cv$archive$benchmark_result$resamplings$resampling[[1]],
+  task = task, fold_id = 1:5
+)
+```
+
+##### Prediction
+
+```{r}
+tic()
+pred_spcv = terra::predict(
+  object = ta, model = at_ksvm_spcv$model$learner$state$model,
+  type = "probabilities", na.rm = T
+)
+pred_cv = terra::predict(
+  object = ta, model = at_ksvm_cv$model$learner$state$model,
+  type = "probabilities", na.rm = T
+)
+toc()
+```
+
+##### Prediction Maps
+
+Here we display landslide susceptibility.
+
+```{r}
+tmap_pred <- function(preds, hs, bbx, sv_study_mask, palette) {
+  t_map <- tm_shape(shp = hs, bbox = bbx) +
+    tm_grid(
+      col = "black", n.x = 1, n.y = 1, labels.inside.frame = FALSE,
+      labels.rot = c(0, 90), lines = FALSE
+    ) +
+    tm_raster(palette = "white", legend.show = FALSE) +
+    # hillshade
+    tm_shape(terra::mask(x = hs, mask = sv_study_mask), bbox = bbx) +
+    tm_raster(palette = gray(0:100 / 100), n = 100, legend.show = FALSE) +
+    # add prediction raster
+    tm_shape(terra::mask(x = preds, mask = sv_study_mask)) +
+    tm_raster(
+      alpha = 0.5, palette = palette, n = 6, legend.show = TRUE, title = "Susceptibility"
+    ) +
+    tm_layout(
+      legend.position = c("left", "bottom"), legend.title.size = 0.9, inner.margins = 0
+    )
+  return(t_map)
+} 
+```
+
+```{r}
+map_svm_spcv <- tmap_pred(
+  preds = pred_spcv[[1]], hs = hs, bbx = bbx, sv_study_mask = sv_study_mask, palette = "Reds"
+)
+map_svm_cv <- tmap_pred(
+  preds = pred_cv[[1]], hs = hs, bbx = bbx, sv_study_mask = sv_study_mask, palette = "Reds"
+)
+```
+
+```{r fig.screen=TRUE}
+tmap_arrange(map, map_glm, map_svm_spcv, map_svm_cv)
+```
+
+##### Prediction Data
+
+```{r fig.screen=TRUE}
+plot(ta)
+```
+
 

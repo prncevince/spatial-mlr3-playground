@@ -1,13 +1,13 @@
-# Workflow derived from # https://github.com/prncevince/actions/blob/main/.github/workflows/pkgdown.yaml
+# Workflow derived from # https://github.com/prncevince/r-actions/blob/main/.github/workflows/knitr-cache.yaml
 
 name: rmd-site
 on:
   push:
     branches: [main]
+    paths-ignore: ['**.md']
   pull_request:
     branches: [main]
-  release:
-    types: [published]
+    paths-ignore: ['**.md']
   workflow_dispatch:
 jobs:
   rmd-site:
@@ -32,10 +32,14 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libgdal-dev libproj-dev libgeos-dev libudunits2-dev netcdf-bin libglpk-dev libxml2-dev libgmp3-dev
-      - uses: prncevince/actions/setup-renv@v1.1.0
+          sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libgdal-dev libproj-dev libgeos-dev libudunits2-dev netcdf-bin libglpk-dev libxml2-dev libgmp3-dev pngquant
+      - uses: prncevince/r-actions/setup-renv@v1.2.0
         with:
           type: 'restore'
+      - uses: prncevince/r-actions/setup-knitr-cache@v1.2.0
+        with:
+          cache: 'spatial-mlr3_cache'
+          cache-hash: 'spatial-mlr3.Rmd'
       - name: Setup & Build Site
         run: make
       - name: Deploy to GitHub pages 🚀
