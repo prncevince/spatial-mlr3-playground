@@ -41,7 +41,7 @@ knit_hooks$set(print.width = function(before, options) {
 output <- "docs"
 
 # styling ----
-if (!dir.exists(paste0(output, '/assets/'))) dir.create(paste0(output, '/assets/', recursive = T))
+if (!dir.exists(paste0(output, '/assets/'))) dir.create(paste0(output, '/assets/'), recursive = T)
 file.copy("assets/style.css", sprintf("%s/assets/", output), overwrite = T, copy.date = TRUE)
 
 # images - path, compression & resolution ----
