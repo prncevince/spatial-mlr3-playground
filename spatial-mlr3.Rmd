@@ -51,11 +51,11 @@ opts_chunk$set(fig.path = fig.path)
 knit_hooks$set(pngquant = hook_pngquant)
 opts_chunk$set(pngquant = '')
 opts_hooks$set(fig.screen = function(options) {
-  mbp14_dpi <- 254
-  mbp14_width <- 3024
-  mbp14_height <- 1964
+  mbp14_dpi <- 254/1.5
+  mbp14_width <- 3023
+  mbp14_height <- 1889
   if (options$fig.screen == TRUE) {
-    options$dpi <- dpi_mbp14
+    options$dpi <- mbp14_dpi
     options$fig.dim = c(mbp14_width/mbp14_dpi, mbp14_height/mbp14_dpi)
   }
   options
