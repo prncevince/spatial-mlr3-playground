@@ -172,7 +172,7 @@ map <- tm_shape(hs, bbox = bbx) +
   tm_legend(bg.color = "white")
 ```
 
-```{r map-landslides-fig, echo=FALSE}
+```{r map-landslides-fig, echo=FALSE, cache=TRUE}
 map
 ```
 
@@ -194,8 +194,7 @@ fit <- glm(
 pred <- terra::predict(ta, model = fit, type = "response")
 ```
 
-```{r map-landslides-glm-bias-pred, error=0}
-# throws error
+```{r map-landslides-glm-bias-pred}
 sv_study_mask <- terra::vect(study_mask)
 
 map_glm <- tm_shape(hs, bbox = bbx) +
@@ -217,7 +216,7 @@ map_glm <- tm_shape(hs, bbox = bbx) +
   )
 ```
 
-```{r map-landslides-glm-bias-pred-fig, echo=FALSE}
+```{r map-landslides-glm-bias-pred-fig, echo=FALSE, cache=TRUE}
 map_glm
 ```
 
@@ -337,7 +336,7 @@ set.seed(1)
 plan(multisession)
 ```
 
-```{r}
+```{r cache=TRUE, cache.lazy=FALSE}
 lgr::get_logger("mlr3")$set_threshold("warn")
 
 tic()
@@ -361,7 +360,6 @@ p_auroc$layers[[1]]$aes_params$fill = c("lightblue2", "mistyrose2")
 
 p_auroc + scale_x_discrete(labels=c("spatial CV", "conventional CV"))
 ```
-
 
 ```{r}
 autoplot(bmr) + scale_x_discrete(labels=c("spatial CV", "conventional CV"))
@@ -427,7 +425,7 @@ set.seed(1)
 plan(multisession)
 ```
 
-```{r}
+```{r train-auto, cache=TRUE, cache.lazy=FALSE}
 lgr::get_logger("mlr3")$set_threshold("warn")
 lgr::get_logger("bbotk")$set_threshold("warn")
 
@@ -441,42 +439,42 @@ progressr::with_progress(
 toc()
 ```
 
-```{r}
+```{r cache=TRUE, dependson='train-auto'}
 at_ksvm_spcv$model$learner$state$model
 ```
 
-```{r print.width=10000}
+```{r print.width=10000, cache=TRUE, dependson='train-auto'}
 at_ksvm_spcv$model$tuning_instance
 ```
 
-```{r}
+```{r cache=TRUE, dependson='train-auto'}
 at_ksvm_spcv$tuning_result$learner_param_vals
 ```
 
-```{r}
+```{r cache=TRUE, dependson='train-auto'}
 at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]
 ```
 
-```{r print.width=10000}
+```{r print.width=10000, cache=TRUE, dependson='train-auto'}
 at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$score()
 ```
 
-```{r}
+```{r cache=TRUE, dependson='train-auto'}
 at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$learner
 ```
 
-```{r}
+```{r cache=TRUE, dependson='train-auto'}
 at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$learners
 ```
 
-```{r}
+```{r cache=TRUE, dependson='train-auto'}
 at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$learners[[1]]$model
 at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$resample_result[[1]]$learners[[5]]$model
 ```
 
 ##### k-folds CV Spatial Partitioning  
 
-```{r fig.screen=TRUE}
+```{r fig.screen=TRUE, cache=TRUE, cache=TRUE, dependson='train-auto'}
 autoplot(
   object = at_ksvm_spcv$archive$benchmark_result$resamplings$resampling[[1]],
   task = task, fold_id = 1:5
@@ -485,7 +483,7 @@ autoplot(
 
 ##### k-folds CV Random Partitioning
 
-```{r fig.screen=TRUE}
+```{r fig.screen=TRUE, cache=TRUE, cache=TRUE, dependson='train-auto'}
 autoplot(
   object = at_ksvm_cv$archive$benchmark_result$resamplings$resampling[[1]],
   task = task, fold_id = 1:5
@@ -494,7 +492,7 @@ autoplot(
 
 ##### Prediction
 
-```{r}
+```{r preds_svm, cache=TRUE, cache=TRUE, dependson='train-auto'}
 tic()
 pred_spcv = terra::predict(
   object = ta, model = at_ksvm_spcv$model$learner$state$model,
@@ -534,7 +532,7 @@ tmap_pred <- function(preds, hs, bbx, sv_study_mask, palette) {
 } 
 ```
 
-```{r}
+```{r maps-svm, cache=TRUE, dependson='preds_svm'}
 map_svm_spcv <- tmap_pred(
   preds = pred_spcv[[1]], hs = hs, bbx = bbx, sv_study_mask = sv_study_mask, palette = "Reds"
 )
@@ -543,13 +541,13 @@ map_svm_cv <- tmap_pred(
 )
 ```
 
-```{r fig.screen=TRUE}
+```{r fig.screen=TRUE, cache=TRUE, dependson=c('maps-svm')}
 tmap_arrange(map, map_glm, map_svm_spcv, map_svm_cv)
 ```
 
 ##### Prediction Data
 
-```{r fig.screen=TRUE}
+```{r fig.screen=TRUE, cache=TRUE}
 plot(ta)
 ```
 
