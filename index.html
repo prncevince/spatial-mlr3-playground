@@ -412,7 +412,7 @@ map &lt;- tm_shape(hs, bbox = bbx) +
 <h6 class="hasAnchor">
 map-landslides-fig<a href="#_map-landslides-fig_" class="anchor-section" aria-label="Anchor link to header"></a>
 </h6>
-<img src="assets/img/map-landslides-fig-1.png" width="672" />
+<img src="docs/assets/img/map-landslides-fig-1.png" width="672" />
 </div>
 <div id="_lsl_" class="chunk section level6">
 <h6 class="hasAnchor">
@@ -489,7 +489,7 @@ map_glm &lt;- tm_shape(hs, bbox = bbx) +
 <h6 class="hasAnchor">
 map-landslides-glm-bias-pred-fig<a href="#_map-landslides-glm-bias-pred-fig_" class="anchor-section" aria-label="Anchor link to header"></a>
 </h6>
-<img src="assets/img/map-landslides-glm-bias-pred-fig-1.png" width="672" />
+<img src="docs/assets/img/map-landslides-glm-bias-pred-fig-1.png" width="672" />
 </div>
 <div id="_auroc_" class="chunk section level6">
 <h6 class="hasAnchor">
@@ -932,7 +932,7 @@ at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$res
   object = at_ksvm_spcv$archive$benchmark_result$resamplings$resampling[[1]],
   task = task, fold_id = 1:5
 )</code></pre>
-<p><img src="assets/img/unnamed-chunk-23-1.png" width="3023" /></p>
+<p><img src="docs/assets/img/unnamed-chunk-23-1.png" width="3023" /></p>
 </div>
 <div id="k-folds-cv-random-partitioning" class="section level5 hasAnchor">
 <h5 class="hasAnchor">k-folds CV Random Partitioning<a href="#k-folds-cv-random-partitioning" class="anchor-section" aria-label="Anchor link to header"></a></h5>
@@ -940,7 +940,7 @@ at_ksvm_spcv$model$tuning_instance$archive$benchmark_result$resample_results$res
   object = at_ksvm_cv$archive$benchmark_result$resamplings$resampling[[1]],
   task = task, fold_id = 1:5
 )</code></pre>
-<p><img src="assets/img/unnamed-chunk-24-1.png" width="3023" /></p>
+<p><img src="docs/assets/img/unnamed-chunk-24-1.png" width="3023" /></p>
 </div>
 <div id="prediction" class="section level5 hasAnchor">
 <h5 class="hasAnchor">Prediction<a href="#prediction" class="anchor-section" aria-label="Anchor link to header"></a></h5>
@@ -996,12 +996,12 @@ map_svm_cv &lt;- tmap_pred(
 )</code></pre>
 </div>
 <pre class="r"><code>tmap_arrange(map, map_glm, map_svm_spcv, map_svm_cv)</code></pre>
-<p><img src="assets/img/unnamed-chunk-26-1.png" width="3023" /></p>
+<p><img src="docs/assets/img/unnamed-chunk-26-1.png" width="3023" /></p>
 </div>
 <div id="prediction-data" class="section level5 hasAnchor">
 <h5 class="hasAnchor">Prediction Data<a href="#prediction-data" class="anchor-section" aria-label="Anchor link to header"></a></h5>
 <pre class="r"><code>plot(ta)</code></pre>
-<p><img src="assets/img/unnamed-chunk-27-1.png" width="3023" /></p>
+<p><img src="docs/assets/img/unnamed-chunk-27-1.png" width="3023" /></p>
 </div>
 </div>
 </div>
